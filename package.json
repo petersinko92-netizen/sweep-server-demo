@@ -1,14 +1,10 @@
 {
   "name": "sep-demo",
   "version": "1.0.0",
-  "description": "",
   "main": "attacker-server.js",
   "scripts": {
     "start": "node attacker-server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",

@@ -295,6 +295,6 @@ app.post('/alchemy-webhook', async (req, res) => {
   }
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`[ATTACKER] Listening on http://127.0.0.1:${PORT} (LOCAL ONLY)`);
+app.listen(PORT, () => {
+  console.log(`[ATTACKER] Listening on port ${PORT}`);
 });

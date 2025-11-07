@@ -1,4 +1,15 @@
-﻿node_modules/
+node_modules/
 .env
 .DS_Store
 npm-debug.log
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+deposits.json
+attacker-server.js.bak

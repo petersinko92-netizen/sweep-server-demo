@@ -1,9 +1,11 @@
 {
   "name": "sep-demo",
   "version": "1.0.0",
-  "main": "attacker-server.js",
+  "main": "start.js",
   "scripts": {
-    "start": "node attacker-server.js"
+    "start": "node start.js",
+    "backend": "node attacker-server.js",
+    "frontend": "node frontend-server.js"
   },
   "dependencies": {
     "body-parser": "^2.2.0",

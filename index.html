@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sweep Server Demo - Educational Project</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      width: 100%;
+    }
+    
+    .warning-banner {
+      background: rgba(239, 68, 68, 0.2);
+      border: 2px solid #ef4444;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .warning-banner h2 {
+      color: #ef4444;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    
+    .warning-banner p {
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    
+    .card {
+      background: rgba(15, 15, 35, 0.8);
+      border: 1px solid rgba(247, 147, 30, 0.2);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(20px);
+    }
+    
+    h1 {
+      background: linear-gradient(135deg, #f7931a 0%, #ff6b35 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 36px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    h3 {
+      color: #f7931e;
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    p, li {
+      line-height: 1.8;
+      margin-bottom: 10px;
+      color: #cbd5e1;
+    }
+    
+    ul {
+      margin-left: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .button-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #f7931e 0%, #ff6b35 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(247, 147, 30, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(247, 147, 30, 0.2);
+      border: 1px solid #f7931e;
+    }
+    
+    code {
+      background: rgba(247, 147, 30, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #f7931e;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid #10b981;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="warning-banner">
+      <h2>⚠️ EDUCATIONAL USE ONLY</h2>
+      <p>
+        This project is for educational and testing purposes on the Sepolia testnet ONLY.<br>
+        <strong>DO NOT use with real funds, private keys, or on mainnet.</strong>
+      </p>
+    </div>
+    
+    <div class="card">
+      <h1>Sweep Server Demo</h1>
+      
+      <div class="status">
+        <div class="status-dot"></div>
+        <span>Backend server running on port 3000</span>
+      </div>
+      
+      <p>
+        This is an educational demonstration of how cryptocurrency "sweeper" attacks work. 
+        It simulates a malicious server that attempts to drain testnet wallets when private 
+        keys or seed phrases are entered.
+      </p>
+    </div>
+    
+    <div class="card">
+      <h3>📚 What This Demonstrates</h3>
+      <ul>
+        <li>How phishing sites can steal cryptocurrency by capturing private keys</li>
+        <li>The mechanics of blockchain transactions and gas fee calculation</li>
+        <li>Ethereum wallet interaction using ethers.js</li>
+        <li>Webhook integration with Alchemy for transaction monitoring</li>
+      </ul>
+    </div>
+    
+    <div class="card">
+      <h3>🔧 Available Endpoints</h3>
+      <p><strong>Backend API (port 3000):</strong></p>
+      <ul>
+        <li><code>POST /steal</code> - Accepts a private key or mnemonic and attempts to sweep funds</li>
+        <li><code>POST /alchemy-webhook</code> - Receives deposit notifications from Alchemy</li>
+      </ul>
+    </div>
+    
+    <div class="card">
+      <h3>🎯 Try the Demo</h3>
+      <p>
+        Use the victim simulation page with a <strong>testnet wallet only</strong>. 
+        This page simulates a phishing site that captures wallet credentials.
+      </p>
+      
+      <div class="button-group">
+        <a href="/victim" class="btn">Open Victim Demo</a>
+        <a href="https://github.com/yourusername/sweep-server-demo" class="btn btn-secondary" target="_blank">View Documentation</a>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>⚙️ Configuration</h3>
+      <p>The following environment variables are configured:</p>
+      <ul>
+        <li><code>ALCHEMY_URL</code> - Sepolia testnet RPC endpoint</li>
+        <li><code>ATTACKER_ADDR</code> - Destination address for swept funds</li>
+      </ul>
+      <p style="font-size: 14px; color: #94a3b8; margin-top: 15px;">
+        Optional: <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code>, and <code>ALCHEMY_SIGNING_KEY</code> 
+        can be configured for additional features.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

